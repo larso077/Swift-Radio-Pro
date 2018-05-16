@@ -14,10 +14,15 @@ class StationsViewController: UIViewController {
     
     // MARK: - IB UI
 
-    @IBOutlet weak var tableView: UITableView!
+
     @IBOutlet weak var stationNowPlayingButton: UIButton!
     @IBOutlet weak var nowPlayingAnimationImageView: UIImageView!
     
+    @IBAction func GoToRadio(_ sender: Any) {
+        let currentStation = stations[0]
+        radioPlayer.station = currentStation
+        performSegue(withIdentifier: "NowPlaying", sender: nil)
+    }
     // MARK: - Properties
     
     let radioPlayer = RadioPlayer()
@@ -54,8 +59,7 @@ class StationsViewController: UIViewController {
         super.viewDidLoad()
         
         // Register 'Nothing Found' cell xib
-        let cellNib = UINib(nibName: "NothingFoundCell", bundle: nil)
-        tableView.register(cellNib, forCellReuseIdentifier: "NothingFound")
+
         
         // Setup Player :: Required in experimental app
         radioPlayer.delegate = self
@@ -64,12 +68,8 @@ class StationsViewController: UIViewController {
         loadStationsFromJSON()
         
         // Setup TableView
-        tableView.backgroundColor = .clear
-        tableView.backgroundView = nil
-        tableView.separatorStyle = .none
-        
-        // Setup Pull to Refresh
-        setupPullToRefresh()
+
+
         
         // Create NowPlaying Animation
         createNowPlayingAnimation()
@@ -82,7 +82,7 @@ class StationsViewController: UIViewController {
         }
         
         // Setup Search Bar
-        setupSearchController()
+
         
         // Setup Remote Command Center
         setupRemoteCommandCenter()
@@ -100,13 +100,7 @@ class StationsViewController: UIViewController {
     // MARK: - Setup UI Elements
     //*****************************************************************
     
-    func setupPullToRefresh() {
-        refreshControl.attributedTitle = NSAttributedString(string: "Pull to refresh", attributes: [.foregroundColor: UIColor.white])
-        refreshControl.backgroundColor = .black
-        refreshControl.tintColor = .white
-        refreshControl.addTarget(self, action: #selector(refresh), for: .valueChanged)
-        tableView.addSubview(refreshControl)
-    }
+
     
     func createNowPlayingAnimation() {
         nowPlayingAnimationImageView.animationImages = AnimationFrames.createFrames()
@@ -184,11 +178,11 @@ class StationsViewController: UIViewController {
         
         if let indexPath = (sender as? IndexPath) {
             // User clicked on row, load/reset station
-            radioPlayer.station = searchController.isActive ? searchedStations[indexPath.row] : stations[indexPath.row]
+            radioPlayer.station = stations[indexPath.row]
             newStation = true
         } else {
             // User clicked on Now Playing button
-            newStation = false
+            newStation = true
         }
         
         nowPlayingViewController = nowPlayingVC
@@ -202,7 +196,6 @@ class StationsViewController: UIViewController {
     
     private func stationsDidUpdate() {
         DispatchQueue.main.async {
-            self.tableView.reloadData()
             guard let currentStation = self.radioPlayer.station else { return }
             
             // Reset everything if the new stations list doesn't have the current station
@@ -304,100 +297,19 @@ class StationsViewController: UIViewController {
 // MARK: - TableViewDataSource
 //*****************************************************************
 
-extension StationsViewController: UITableViewDataSource {
-    
-    @objc(tableView:heightForRowAtIndexPath:)
-    func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
-        return 90.0
-    }
-    
-    func numberOfSections(in tableView: UITableView) -> Int {
-        return 1
-    }
-    
-    func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        
-        if searchController.isActive {
-            return searchedStations.count
-        } else {
-            return stations.isEmpty ? 1 : stations.count
-        }
-    }
-    
-    func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        
-        if stations.isEmpty {
-            let cell = tableView.dequeueReusableCell(withIdentifier: "NothingFound", for: indexPath) 
-            cell.backgroundColor = .clear
-            cell.selectionStyle = .none
-            return cell
-            
-        } else {
-            let cell = tableView.dequeueReusableCell(withIdentifier: "StationCell", for: indexPath) as! StationTableViewCell
-            
-            // alternate background color
-            cell.backgroundColor = (indexPath.row % 2 == 0) ? UIColor.clear : UIColor.black.withAlphaComponent(0.2)
-            
-            let station = searchController.isActive ? searchedStations[indexPath.row] : stations[indexPath.row]
-            cell.configureStationCell(station: station)
-            
-            return cell
-        }
-    }
-}
+
 
 //*****************************************************************
 // MARK: - TableViewDelegate
 //*****************************************************************
 
-extension StationsViewController: UITableViewDelegate {
-    
-    func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-        
-        tableView.deselectRow(at: indexPath, animated: true)
-        performSegue(withIdentifier: "NowPlaying", sender: indexPath)
-    }
-}
+
 
 //*****************************************************************
 // MARK: - UISearchControllerDelegate / Setup
 //*****************************************************************
 
-extension StationsViewController: UISearchResultsUpdating {
-    
-    func setupSearchController() {
-        guard searchable else { return }
-        
-        searchController.searchResultsUpdater = self
-        searchController.dimsBackgroundDuringPresentation = false
-        searchController.searchBar.sizeToFit()
-        
-        // Add UISearchController to the tableView
-        tableView.tableHeaderView = searchController.searchBar
-        tableView.tableHeaderView?.backgroundColor = UIColor.clear
-        definesPresentationContext = true
-        searchController.hidesNavigationBarDuringPresentation = false
-        
-        // Style the UISearchController
-        searchController.searchBar.barTintColor = UIColor.clear
-        searchController.searchBar.tintColor = UIColor.white
-        
-        // Hide the UISearchController
-        tableView.setContentOffset(CGPoint(x: 0.0, y: searchController.searchBar.frame.size.height), animated: false)
-        
-        // Set a black keyborad for UISearchController's TextField
-        let searchTextField = searchController.searchBar.value(forKey: "_searchField") as! UITextField
-        searchTextField.keyboardAppearance = UIKeyboardAppearance.dark
-    }
 
-    func updateSearchResults(for searchController: UISearchController) {
-        guard let searchText = searchController.searchBar.text else { return }
-        
-        searchedStations.removeAll(keepingCapacity: false)
-        searchedStations = stations.filter { $0.name.range(of: searchText, options: [.caseInsensitive]) != nil }
-        self.tableView.reloadData()
-    }
-}
 
 //*****************************************************************
 // MARK: - RadioPlayerDelegate
