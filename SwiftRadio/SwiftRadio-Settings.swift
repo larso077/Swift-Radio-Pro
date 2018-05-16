@@ -23,7 +23,7 @@ let kDebugLog = true
 // Set it to "false" to use the JSON file at the stationDataURL
 
 let useLocalStations = true
-let stationDataURL   = "http://yoururl.com/json/stations.json"
+let stationDataURL   = "https://streams.radio.co/s386aaf9f7/listen"
 
 //**************************************
 // SEARCH BAR

@@ -57,7 +57,7 @@ class StationsViewController: UIViewController {
         let cellNib = UINib(nibName: "NothingFoundCell", bundle: nil)
         tableView.register(cellNib, forCellReuseIdentifier: "NothingFound")
         
-        // Setup Player
+        // Setup Player :: Required in experimental app
         radioPlayer.delegate = self
         
         // Load Data
